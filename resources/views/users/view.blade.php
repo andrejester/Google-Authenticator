@@ -72,19 +72,15 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-lg-12">
-                                            <h2>QR Code for {{ $user->name }}</h2>
+                                            <h2>QR Code for {{ $users->name }}</h2>
                                             <div class="text-center">
-                                                <img src="data:image/png;base64,{{ $qrCodeImage }}" alt="QR Code">
+                                                {{-- <img src="{{ $googleChartApiUrl }}" alt="QR Code"> --}}
+                                                {!! $googleChartApiUrl !!}
                                             </div>
                                             <a href="{{ route('users.index') }}" class="btn btn-secondary mt-4">Back to
                                                 List</a>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="card-footer text-right">
-                                    <button class="btn btn-dark mr-1" type="reset"><i
-                                            class="fa-solid fa-arrows-rotate"></i>
-                                        Reset</button>
                                 </div>
                             </form>
                         </div>

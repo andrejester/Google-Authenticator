@@ -29,10 +29,6 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <div class="text-right">
-                                    <a href="/barang/create" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add
-                                        Barang</a>
-                                </div>
                             </div>
                             <!-- /.card-header -->
                             <div class="card-body">
@@ -40,7 +36,6 @@
                                     style="width: 100%">
                                     <thead>
                                         <tr>
-                                            <th>#</th>
                                             <th>ID</th>
                                             <th>Nama</th>
                                             <th>Email</th>
@@ -53,7 +48,7 @@
                                     <tbody>
                                         @foreach ($users as $user)
                                             <tr>
-                                                <td>{{ $user->id }}</td>
+                                                <td>{{ $user->id_user }}</td>
                                                 <td>{{ $user->name }}</td>
                                                 <td>{{ $user->email }}</td>
                                                 <td>{{ $user->email_verified_at }}</td>

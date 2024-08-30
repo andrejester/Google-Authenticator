@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use Illuminate\Http\Request;
 use RealRashid\SweetAlert\Facades\Alert;
 
 use PragmaRX\Google2FA\Google2FA;
 use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -20,34 +21,85 @@ class UserController extends Controller
         return view('users.index', compact('users')); // Mengirim data ke view
     }
 
+    public function create()
+    {
+        $google2fa = new Google2FA();
+        $secret = $google2fa->generateSecretKey();
+
+        // Generate QR code URL
+        $QR_Image = sprintf(
+            'otpauth://totp/%s:%s?secret=%s&issuer=%s',
+            config('app.name'),
+            old('email', 'sofanipin@gmail.com'),
+            $secret,
+            config('app.name')
+        );
+
+        // Menggunakan BaconQrCode untuk membuat QR code
+        $renderer = new ImageRenderer(
+            new \BaconQrCode\Renderer\RendererStyle\RendererStyle(400),
+            new SvgImageBackEnd()
+        );
+
+        $writer = new Writer($renderer);
+        $qrCode = $writer->writeString($QR_Image);
+
+        return view('users.users-add', [
+            'title' => 'Register',
+            'qrCode' => $qrCode,
+            'secret' => $secret
+        ]);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required',
+            'email' => 'required|unique:users',
+            'password' => 'required',
+            'passwordConfirm' => 'required|same:password',
+            'google2fa_secret' => 'required'
+        ]);
+
+        $validated['password']         = Hash::make($request['password']);
+
+        $user = User::create($validated);
+
+        Alert::success('Success', 'User has been saved !');
+        return redirect('/users');
+    }
+
     public function view($id)
     {
-        $user = User::findOrFail($id);
+        $users = User::findOrFail($id);
 
         // Inisialisasi Google2FA
         $google2fa = new Google2FA();
 
         // Dapatkan secret 2FA pengguna
-        $secret = $user->google2fa_secret;
+        $secret = $users->google2fa_secret;
 
-        // Buat QR Code URL
-        $qrCodeUrl = $google2fa->getQRCodeUrl(
-            config('app.name'),  // Nama aplikasi
-            $user->email,        // Email pengguna
-            $secret              // Secret key pengguna
+        $QR_Image = sprintf(
+            'otpauth://totp/%s:%s?secret=%s&issuer=%s',
+            config('app.name'),
+            old('email', 'sofanipin@gmail.com'),
+            $secret,
+            config('app.name')
         );
 
-        // Generate QR code sebagai gambar base64
+        // Menggunakan BaconQrCode untuk membuat QR code
         $renderer = new ImageRenderer(
-            new RendererStyle(200),
-            new \BaconQrCode\Renderer\Image\ImagickImageBackEnd()
+            new \BaconQrCode\Renderer\RendererStyle\RendererStyle(400),
+            new SvgImageBackEnd()
         );
 
         $writer = new Writer($renderer);
-        $qrCodeImage = base64_encode($writer->writeString($qrCodeUrl));
+        $googleChartApiUrl = $writer->writeString($QR_Image);
 
-        // Kirim data ke view
-        return view('users.view', compact('user', 'qrCodeImage'));
+        return view('users.view', compact('users', 'googleChartApiUrl'));
     }
 
     /**
